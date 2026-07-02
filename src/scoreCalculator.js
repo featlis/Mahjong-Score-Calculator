@@ -72,9 +72,9 @@ export function calculateHandScore(handTiles, winTile, doraIndicators, isTsumo, 
     query += '+d' + formatTiles(actualDoras);
   }
 
-  // 特別役 + 場風自風
+  // 特別役 + 場風自風 + ローカル役フラグ(o)
   // 例: +rt11 (リーチ、天和、場風東、自風東)
-  query += `+${extraYaku}${bakaze}${jikaze}`;
+  query += `+${extraYaku}o${bakaze}${jikaze}`;
 
   console.log('Riichi Query:', query);
   

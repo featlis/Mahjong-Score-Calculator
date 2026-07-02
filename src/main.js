@@ -159,12 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // riichiパッケージはtextプロパティに全体サマリが入るか、独自で判定するか。
     // han と fu を表示
     let title = '';
-    if (result.han >= 13) title = '役満';
-    else if (result.han >= 11) title = '三倍満';
-    else if (result.han >= 8) title = '倍満';
-    else if (result.han >= 6) title = '跳満';
-    else if (result.han >= 5) title = '満貫';
-    else title = `${result.han}飜 ${result.fu}符`;
+    if (result.name) {
+      title = result.name;
+    } else {
+      title = `${result.han}飜 ${result.fu}符`;
+    }
     
     scoreNameEl.textContent = title;
     scoreTotalEl.textContent = result.ten.toLocaleString();
