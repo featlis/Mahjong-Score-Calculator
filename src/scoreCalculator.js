@@ -16,7 +16,6 @@ function formatTiles(tiles) {
   let str = '';
   for (const suit of ['m', 'p', 's', 'z']) {
     if (suits[suit].length > 0) {
-      // 念のためソートする
       suits[suit].sort();
       str += suits[suit].join('') + suit;
     }
@@ -25,35 +24,53 @@ function formatTiles(tiles) {
 }
 
 /**
+ * ドラ表示牌を実際のドラ牌に変換する
+ * @param {string} indicator - '1m', '9s', '1z' など
+ * @returns {string} 実際のドラ牌
+ */
+function getDoraTile(indicator) {
+  const num = parseInt(indicator[0], 10);
+  const suit = indicator[1];
+  
+  if (suit === 'm' || suit === 'p' || suit === 's') {
+    return (num % 9 + 1) + suit; // 1->2, 9->1
+  } else if (suit === 'z') {
+    if (num >= 1 && num <= 4) { // 風牌
+      return (num % 4 + 1) + suit; // 1->2, 4->1
+    } else if (num >= 5 && num <= 7) { // 三元牌
+      return ((num - 5 + 1) % 3 + 5) + suit; // 5->6, 7->5
+    }
+  }
+  return indicator;
+}
+
+/**
  * 役・点数を計算する
  * @param {string[]} handTiles - 13枚の手牌配列
  * @param {string} winTile - 1枚のあがり牌
- * @param {string[]} doraTiles - ドラ表示牌の配列
+ * @param {string[]} doraIndicators - ドラ表示牌の配列
  * @param {boolean} isTsumo - ツモかどうか
  * @param {number} bakaze - 場風 (1:東, 2:南)
  * @param {number} jikaze - 自風 (1:東, 2:南, 3:西, 4:北)
  * @returns {object} 計算結果
  */
-export function calculateHandScore(handTiles, winTile, doraTiles, isTsumo, bakaze, jikaze) {
+export function calculateHandScore(handTiles, winTile, doraIndicators, isTsumo, bakaze, jikaze) {
   if (handTiles.length !== 13 || !winTile) {
     return { error: true, message: '手牌は14枚にしてください。' };
   }
 
-  // 手牌の文字列構築
   const handStr = formatTiles(handTiles);
-  
-  // 和了牌の文字列構築
-  // ツモならそのまま結合、ロンなら "+" を付ける
   const winStr = isTsumo ? winTile : '+' + winTile;
 
   let query = handStr + winStr;
 
   // ドラ追加
-  if (doraTiles && doraTiles.length > 0) {
-    query += '+d' + formatTiles(doraTiles);
+  if (doraIndicators && doraIndicators.length > 0) {
+    // 表示牌を実際のドラ牌に変換して渡す
+    const actualDoras = doraIndicators.map(getDoraTile);
+    query += '+d' + formatTiles(actualDoras);
   }
 
-  // 場風・自風の追加 (1:東, 2:南, 3:西, 4:北)
   query += `+${bakaze}${jikaze}`;
 
   console.log('Riichi Query:', query);
@@ -63,7 +80,7 @@ export function calculateHandScore(handTiles, winTile, doraTiles, isTsumo, bakaz
     const result = riichi.calc();
     
     if (result.error) {
-      return { error: true, message: '役がありません（または多牌/少牌等）' };
+      return { error: true, message: '役がありません（またはフリテン、条件未達）' };
     }
     
     if (!result.isAgari) {
@@ -76,8 +93,8 @@ export function calculateHandScore(handTiles, winTile, doraTiles, isTsumo, bakaz
       ten: result.ten,
       han: result.han,
       fu: result.fu,
-      name: result.name, // 満貫などの名前（riichiライブラリではテキストの場合もある）
-      yaku: result.yaku, // { 'リーチ': '1飜', ... }
+      name: result.name,
+      yaku: result.yaku,
       text: result.text,
       oya: result.oya,
       ko: result.ko
