@@ -1,91 +1,90 @@
+import Riichi from 'riichi';
+
 /**
- * Calculate the Mahjong score based on han, fu, dealer status, and win type.
- * @param {number} han - 飜数 (1-13)
- * @param {number} fu - 符数 (20-110)
- * @param {boolean} isOya - 親かどうか
- * @param {boolean} isTsumo - ツモあがりかどうか
- * @returns {object} { name: string, total: number, breakdown: string }
+ * 手牌の配列からriichiパッケージ用の文字列に変換する
+ * @param {string[]} tiles - ['1m', '9s', '1z'...]
+ * @returns {string} 
  */
-export function calculateScore(han, fu, isOya, isTsumo) {
-  // 満貫以上の判定
-  let basePoint = 0;
-  let name = "";
+function formatTiles(tiles) {
+  const suits = { m: [], p: [], s: [], z: [] };
+  tiles.forEach(t => {
+    if (t.length === 2) {
+      suits[t[1]].push(t[0]);
+    }
+  });
 
-  if (han >= 13) {
-    basePoint = 8000; // 役満
-    name = "役満";
-  } else if (han >= 11) {
-    basePoint = 6000; // 三倍満
-    name = "三倍満";
-  } else if (han >= 8) {
-    basePoint = 4000; // 倍満
-    name = "倍満";
-  } else if (han >= 6) {
-    basePoint = 3000; // 跳満
-    name = "跳満";
-  } else if (han >= 5) {
-    basePoint = 2000; // 満貫
-    name = "満貫";
-  } else {
-    // 1〜4飜の場合の基本点計算
-    basePoint = fu * Math.pow(2, han + 2);
-    // 満貫打ち切り (基本点が2000を超える場合は満貫とする。※切り上げ満貫ルールなどは考慮せず標準的なルール)
-    if (basePoint >= 2000) {
-      basePoint = 2000;
-      name = "満貫";
-    } else if (han === 4 && fu >= 40) {
-      basePoint = 2000;
-      name = "満貫";
-    } else if (han === 3 && fu >= 70) {
-      basePoint = 2000;
-      name = "満貫";
-    } else {
-      name = `${han}飜 ${fu}符`;
+  let str = '';
+  for (const suit of ['m', 'p', 's', 'z']) {
+    if (suits[suit].length > 0) {
+      // 念のためソートする
+      suits[suit].sort();
+      str += suits[suit].join('') + suit;
     }
   }
+  return str;
+}
 
-  // 切り上げ処理
-  const ceil100 = (num) => Math.ceil(num / 100) * 100;
-
-  let total = 0;
-  let breakdown = "";
-
-  if (isOya) {
-    // 親の場合
-    if (isTsumo) {
-      const perKo = ceil100(basePoint * 2);
-      total = perKo * 3;
-      breakdown = `${perKo} ALL`;
-    } else {
-      total = ceil100(basePoint * 6);
-      breakdown = "ロンあがり";
-    }
-  } else {
-    // 子の場合
-    if (isTsumo) {
-      const fromOya = ceil100(basePoint * 2);
-      const fromKo = ceil100(basePoint);
-      total = fromOya + fromKo * 2;
-      breakdown = `${fromKo} / ${fromOya}`;
-    } else {
-      total = ceil100(basePoint * 4);
-      breakdown = "ロンあがり";
-    }
+/**
+ * 役・点数を計算する
+ * @param {string[]} handTiles - 13枚の手牌配列
+ * @param {string} winTile - 1枚のあがり牌
+ * @param {string[]} doraTiles - ドラ表示牌の配列
+ * @param {boolean} isTsumo - ツモかどうか
+ * @param {number} bakaze - 場風 (1:東, 2:南)
+ * @param {number} jikaze - 自風 (1:東, 2:南, 3:西, 4:北)
+ * @returns {object} 計算結果
+ */
+export function calculateHandScore(handTiles, winTile, doraTiles, isTsumo, bakaze, jikaze) {
+  if (handTiles.length !== 13 || !winTile) {
+    return { error: true, message: '手牌は14枚にしてください。' };
   }
 
-  // 例外処理：七対子のツモは25符固定
-  if (han === 1 && fu === 20 && !isTsumo) {
-    // 1飜20符（平和ツモ以外はありえないので一応ガード）
+  // 手牌の文字列構築
+  const handStr = formatTiles(handTiles);
+  
+  // 和了牌の文字列構築
+  // ツモならそのまま結合、ロンなら "+" を付ける
+  const winStr = isTsumo ? winTile : '+' + winTile;
+
+  let query = handStr + winStr;
+
+  // ドラ追加
+  if (doraTiles && doraTiles.length > 0) {
+    query += '+d' + formatTiles(doraTiles);
   }
 
-  // 例外：喰い平和の30符1飜は特例で1000点等、様々なローカルルールがあるが一般的なMリーグルールベース
-  // 平和ツモ = 20符
-  // ツモは+2符されるが20符は平和ツモのみ
-  // ピンフロンは30符
+  // 場風・自風の追加 (1:東, 2:南, 3:西, 4:北)
+  query += `+${bakaze}${jikaze}`;
 
-  return {
-    name,
-    total,
-    breakdown
-  };
+  console.log('Riichi Query:', query);
+  
+  try {
+    const riichi = new Riichi(query);
+    const result = riichi.calc();
+    
+    if (result.error) {
+      return { error: true, message: '役がありません（または多牌/少牌等）' };
+    }
+    
+    if (!result.isAgari) {
+      return { error: true, message: 'あがりの形になっていません' };
+    }
+
+    return {
+      error: false,
+      isAgari: true,
+      ten: result.ten,
+      han: result.han,
+      fu: result.fu,
+      name: result.name, // 満貫などの名前（riichiライブラリではテキストの場合もある）
+      yaku: result.yaku, // { 'リーチ': '1飜', ... }
+      text: result.text,
+      oya: result.oya,
+      ko: result.ko
+    };
+
+  } catch (e) {
+    console.error(e);
+    return { error: true, message: '計算エラーが発生しました' };
+  }
 }

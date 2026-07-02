@@ -12,7 +12,9 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
-  "dependencies": {},
+  "dependencies": {
+    "riichi": "^1.2.0"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "electron": "^28.2.1",

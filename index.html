@@ -14,19 +14,61 @@
       </header>
 
       <main>
-        <div class="glass-panel">
+        <!-- 手牌・ドラ表示エリア -->
+        <div class="glass-panel hand-panel">
+          <div class="panel-section">
+            <div class="section-header">
+              <h3>手牌 <span id="hand-count" class="badge">0 / 14</span></h3>
+              <span class="hint">14枚目が和了（あがり）牌</span>
+            </div>
+            <div id="hand-tiles" class="tiles-display empty">
+              <!-- JSで牌が追加される -->
+            </div>
+          </div>
           
+          <div class="panel-section">
+            <div class="section-header">
+              <h3>ドラ表示牌</h3>
+            </div>
+            <div id="dora-tiles" class="tiles-display empty">
+              <!-- JSで牌が追加される -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 牌キーボード -->
+        <div class="glass-panel keyboard-panel">
+          <div class="keyboard-row" id="kb-manzu"></div>
+          <div class="keyboard-row" id="kb-pinzu"></div>
+          <div class="keyboard-row" id="kb-sozu"></div>
+          <div class="keyboard-row" id="kb-jihai"></div>
+          
+          <div class="keyboard-controls">
+            <button id="btn-backspace" class="control-btn">⌫ 1枚消す</button>
+            <button id="btn-clear" class="control-btn danger">✖ すべて消す</button>
+            <button id="btn-toggle-dora" class="control-btn outline">ドラ入力モード: OFF</button>
+          </div>
+        </div>
+
+        <!-- 条件選択エリア -->
+        <div class="glass-panel conditions-panel">
           <div class="controls-row">
             <div class="toggle-group">
-              <label>親 / 子</label>
-              <div class="segmented-control" id="dealer-toggle">
-                <input type="radio" name="dealer" id="oya" value="oya">
-                <label for="oya">親</label>
-                <input type="radio" name="dealer" id="ko" value="ko" checked>
-                <label for="ko">子</label>
+              <label>親 / 子 (自風)</label>
+              <div class="segmented-control" id="wind-toggle">
+                <input type="radio" name="wind" id="wind-east" value="1">
+                <label for="wind-east">東 (親)</label>
+                <input type="radio" name="wind" id="wind-south" value="2" checked>
+                <label for="wind-south">南 (子)</label>
+                <input type="radio" name="wind" id="wind-west" value="3">
+                <label for="wind-west">西 (子)</label>
+                <input type="radio" name="wind" id="wind-north" value="4">
+                <label for="wind-north">北 (子)</label>
               </div>
             </div>
+          </div>
 
+          <div class="controls-row">
             <div class="toggle-group">
               <label>ツモ / ロン</label>
               <div class="segmented-control" id="win-type-toggle">
@@ -36,50 +78,32 @@
                 <label for="ron">ロン</label>
               </div>
             </div>
-          </div>
-
-          <div class="input-group">
-            <label for="han-select">飜（ハン）</label>
-            <div class="custom-select-wrapper">
-              <select id="han-select">
-                <option value="1">1飜</option>
-                <option value="2">2飜</option>
-                <option value="3">3飜</option>
-                <option value="4">4飜</option>
-                <option value="5">5飜 (満貫)</option>
-                <option value="6">6-7飜 (跳満)</option>
-                <option value="8">8-10飜 (倍満)</option>
-                <option value="11">11-12飜 (三倍満)</option>
-                <option value="13">13飜以上 (役満)</option>
-              </select>
+            <div class="toggle-group">
+              <label>場風</label>
+              <div class="segmented-control" id="bakaze-toggle">
+                <input type="radio" name="bakaze" id="bakaze-east" value="1" checked>
+                <label for="bakaze-east">東</label>
+                <input type="radio" name="bakaze" id="bakaze-south" value="2">
+                <label for="bakaze-south">南</label>
+              </div>
             </div>
           </div>
-
-          <div class="input-group" id="fu-group">
-            <label for="fu-select">符（フ）</label>
-            <div class="custom-select-wrapper">
-              <select id="fu-select">
-                <option value="20">20符</option>
-                <option value="25">25符 (七対子)</option>
-                <option value="30" selected>30符</option>
-                <option value="40">40符</option>
-                <option value="50">50符</option>
-                <option value="60">60符</option>
-                <option value="70">70符</option>
-                <option value="80">80符</option>
-                <option value="90">90符</option>
-                <option value="100">100符</option>
-                <option value="110">110符</option>
-              </select>
-            </div>
-          </div>
-
         </div>
 
+        <!-- 計算結果パネル -->
         <div class="result-panel">
-          <div class="score-label" id="score-name">点数</div>
-          <div class="score-value" id="score-total">--</div>
-          <div class="score-breakdown" id="score-breakdown">--</div>
+          <div class="score-main">
+            <div class="score-label" id="score-name">未完成の手牌です</div>
+            <div class="score-value" id="score-total">--</div>
+            <div class="score-breakdown" id="score-breakdown">--</div>
+          </div>
+          
+          <div class="yaku-details">
+            <h4>成立役・詳細</h4>
+            <ul id="yaku-list" class="yaku-list">
+              <li class="empty-yaku">役がありません</li>
+            </ul>
+          </div>
         </div>
 
       </main>
