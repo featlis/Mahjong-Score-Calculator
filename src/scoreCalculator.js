@@ -52,9 +52,10 @@ function getDoraTile(indicator) {
  * @param {boolean} isTsumo - ツモかどうか
  * @param {number} bakaze - 場風 (1:東, 2:南)
  * @param {number} jikaze - 自風 (1:東, 2:南, 3:西, 4:北)
+ * @param {string} extraYaku - 追加役（r:リーチ, t:天和 など）
  * @returns {object} 計算結果
  */
-export function calculateHandScore(handTiles, winTile, doraIndicators, isTsumo, bakaze, jikaze) {
+export function calculateHandScore(handTiles, winTile, doraIndicators, isTsumo, bakaze, jikaze, extraYaku = '') {
   if (handTiles.length !== 13 || !winTile) {
     return { error: true, message: '手牌は14枚にしてください。' };
   }
@@ -71,7 +72,9 @@ export function calculateHandScore(handTiles, winTile, doraIndicators, isTsumo, 
     query += '+d' + formatTiles(actualDoras);
   }
 
-  query += `+${bakaze}${jikaze}`;
+  // 特別役 + 場風自風
+  // 例: +rt11 (リーチ、天和、場風東、自風東)
+  query += `+${extraYaku}${bakaze}${jikaze}`;
 
   console.log('Riichi Query:', query);
   

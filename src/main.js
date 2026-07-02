@@ -118,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isTsumo = document.getElementById('tsumo').checked;
     
-    // 自風・場風の取得
     const jikazeStr = document.querySelector('input[name="wind"]:checked').value;
     const bakazeStr = document.querySelector('input[name="bakaze"]:checked').value;
     const isOya = (jikazeStr === '1'); // 東が親
@@ -126,7 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const hand13 = hand.slice(0, 13);
     const winTile = hand[13];
 
-    const result = calculateHandScore(hand13, winTile, dora, isTsumo, parseInt(bakazeStr), parseInt(jikazeStr));
+    // 特別役オプションの取得
+    let extraYaku = '';
+    document.querySelectorAll('#extra-yaku-group input[type="checkbox"]:checked').forEach(chk => {
+      extraYaku += chk.value;
+    });
+
+    const result = calculateHandScore(hand13, winTile, dora, isTsumo, parseInt(bakazeStr), parseInt(jikazeStr), extraYaku);
 
     if (result.error) {
       scoreNameEl.textContent = result.message;
@@ -210,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.querySelectorAll('input[name="wind"], input[name="win-type"], input[name="bakaze"]').forEach(el => {
+  document.querySelectorAll('input[name="wind"], input[name="win-type"], input[name="bakaze"], #extra-yaku-group input[type="checkbox"]').forEach(el => {
     el.addEventListener('change', triggerCalculate);
   });
 
