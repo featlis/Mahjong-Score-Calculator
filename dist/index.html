@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>麻雀点数計算</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="./assets/index-T4a6e6ul.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CvpYn-EN.css">
+  </head>
+  <body>
+    <div class="app-container">
+      <header>
+        <h1>麻雀点数計算</h1>
+      </header>
+
+      <main>
+        <div class="glass-panel">
+          
+          <div class="controls-row">
+            <div class="toggle-group">
+              <label>親 / 子</label>
+              <div class="segmented-control" id="dealer-toggle">
+                <input type="radio" name="dealer" id="oya" value="oya">
+                <label for="oya">親</label>
+                <input type="radio" name="dealer" id="ko" value="ko" checked>
+                <label for="ko">子</label>
+              </div>
+            </div>
+
+            <div class="toggle-group">
+              <label>ツモ / ロン</label>
+              <div class="segmented-control" id="win-type-toggle">
+                <input type="radio" name="win-type" id="tsumo" value="tsumo">
+                <label for="tsumo">ツモ</label>
+                <input type="radio" name="win-type" id="ron" value="ron" checked>
+                <label for="ron">ロン</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="han-select">飜（ハン）</label>
+            <div class="custom-select-wrapper">
+              <select id="han-select">
+                <option value="1">1飜</option>
+                <option value="2">2飜</option>
+                <option value="3">3飜</option>
+                <option value="4">4飜</option>
+                <option value="5">5飜 (満貫)</option>
+                <option value="6">6-7飜 (跳満)</option>
+                <option value="8">8-10飜 (倍満)</option>
+                <option value="11">11-12飜 (三倍満)</option>
+                <option value="13">13飜以上 (役満)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-group" id="fu-group">
+            <label for="fu-select">符（フ）</label>
+            <div class="custom-select-wrapper">
+              <select id="fu-select">
+                <option value="20">20符</option>
+                <option value="25">25符 (七対子)</option>
+                <option value="30" selected>30符</option>
+                <option value="40">40符</option>
+                <option value="50">50符</option>
+                <option value="60">60符</option>
+                <option value="70">70符</option>
+                <option value="80">80符</option>
+                <option value="90">90符</option>
+                <option value="100">100符</option>
+                <option value="110">110符</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="result-panel">
+          <div class="score-label" id="score-name">点数</div>
+          <div class="score-value" id="score-total">--</div>
+          <div class="score-breakdown" id="score-breakdown">--</div>
+        </div>
+
+      </main>
+    </div>
+  </body>
+</html>
