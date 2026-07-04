@@ -35,8 +35,10 @@
     ],
     "win": {
       "target": [
-        "nsis"
-      ]
+        "nsis",
+        "zip"
+      ],
+      "artifactName": "MahjongScore-v${version}-Windows.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -45,9 +47,11 @@
     },
     "linux": {
       "target": [
-        "deb"
+        "deb",
+        "tar.gz"
       ],
-      "category": "Utility"
+      "category": "Utility",
+      "artifactName": "MahjongScore-v${version}-Linux.${ext}"
     }
   }
 }

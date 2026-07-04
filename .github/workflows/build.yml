@@ -34,19 +34,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows Artifacts
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
-          path: dist-electron/*.exe
+          name: windows-artifacts
+          path: |
+            dist-electron/*.exe
+            dist-electron/*.zip
 
-      - name: Upload Debian Artifact
+      - name: Upload Linux Artifacts
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: debian-installer
-          path: dist-electron/*.deb
+          name: linux-artifacts
+          path: |
+            dist-electron/*.deb
+            dist-electron/*.tar.gz
 
   release:
     needs: build
@@ -63,9 +67,13 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.0
+          name: Release v1.0.0
           files: |
-            artifacts/windows-installer/*.exe
-            artifacts/debian-installer/*.deb
+            artifacts/windows-artifacts/*.exe
+            artifacts/windows-artifacts/*.zip
+            artifacts/linux-artifacts/*.deb
+            artifacts/linux-artifacts/*.tar.gz
           draft: false
           prerelease: false
 
