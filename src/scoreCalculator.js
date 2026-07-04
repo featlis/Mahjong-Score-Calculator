@@ -72,9 +72,15 @@ export function calculateHandScore(handTiles, winTile, doraIndicators, isTsumo, 
     query += '+d' + formatTiles(actualDoras);
   }
 
-  // 特別役 + 場風自風 + ローカル役フラグ(o)
-  // 例: +rt11 (リーチ、天和、場風東、自風東)
-  query += `+${extraYaku}o${bakaze}${jikaze}`;
+  // 特別役 + 場風自風
+  // ※ 'o' フラグを含めない（ローカル役を無効にする）
+  // riichi パッケージは extra に 'o' があると allLocalEnabled = true にし、
+  // 人和・大七星などのローカル役満が意図せず発動する
+  if (extraYaku) {
+    query += `+${extraYaku}${bakaze}${jikaze}`;
+  } else {
+    query += `+${bakaze}${jikaze}`;
+  }
 
   console.log('Riichi Query:', query);
   

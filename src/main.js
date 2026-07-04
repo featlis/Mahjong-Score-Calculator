@@ -1,21 +1,111 @@
 import { calculateHandScore } from './scoreCalculator.js';
 
-const TILE_UNICODE = {
-  '1m': '🀇', '2m': '🀈', '3m': '🀉', '4m': '🀊', '5m': '🀋', '6m': '🀌', '7m': '🀍', '8m': '🀎', '9m': '🀏',
-  '1p': '🀙', '2p': '🀚', '3p': '🀛', '4p': '🀜', '5p': '🀝', '6p': '🀞', '7p': '🀟', '8p': '🀠', '9p': '🀡',
-  '1s': '🀐', '2s': '🀑', '3s': '🀒', '4s': '🀓', '5s': '🀔', '6s': '🀕', '7s': '🀖', '8s': '🀗', '9s': '🀘',
-  '1z': '🀀', '2z': '🀁', '3z': '🀂', '4z': '🀃', '5z': '🀆', '6z': '🀅', '7z': '🀄'
+/* ==========================================================
+   Tile Data & Rendering
+   ========================================================== */
+
+/** 各牌の表示ラベル */
+const TILE_LABELS = {
+  // 萬子
+  '1m': { num: '一', suit: '萬', type: 'm' },
+  '2m': { num: '二', suit: '萬', type: 'm' },
+  '3m': { num: '三', suit: '萬', type: 'm' },
+  '4m': { num: '四', suit: '萬', type: 'm' },
+  '5m': { num: '五', suit: '萬', type: 'm' },
+  '6m': { num: '六', suit: '萬', type: 'm' },
+  '7m': { num: '七', suit: '萬', type: 'm' },
+  '8m': { num: '八', suit: '萬', type: 'm' },
+  '9m': { num: '九', suit: '萬', type: 'm' },
+  // 筒子
+  '1p': { num: '1', suit: '筒', type: 'p' },
+  '2p': { num: '2', suit: '筒', type: 'p' },
+  '3p': { num: '3', suit: '筒', type: 'p' },
+  '4p': { num: '4', suit: '筒', type: 'p' },
+  '5p': { num: '5', suit: '筒', type: 'p' },
+  '6p': { num: '6', suit: '筒', type: 'p' },
+  '7p': { num: '7', suit: '筒', type: 'p' },
+  '8p': { num: '8', suit: '筒', type: 'p' },
+  '9p': { num: '9', suit: '筒', type: 'p' },
+  // 索子
+  '1s': { num: '1', suit: '索', type: 's' },
+  '2s': { num: '2', suit: '索', type: 's' },
+  '3s': { num: '3', suit: '索', type: 's' },
+  '4s': { num: '4', suit: '索', type: 's' },
+  '5s': { num: '5', suit: '索', type: 's' },
+  '6s': { num: '6', suit: '索', type: 's' },
+  '7s': { num: '7', suit: '索', type: 's' },
+  '8s': { num: '8', suit: '索', type: 's' },
+  '9s': { num: '9', suit: '索', type: 's' },
+  // 字牌
+  '1z': { label: '東', type: 'z' },
+  '2z': { label: '南', type: 'z' },
+  '3z': { label: '西', type: 'z' },
+  '4z': { label: '北', type: 'z' },
+  '5z': { label: '', type: 'z' },  // 白: 空の枠で表現
+  '6z': { label: '發', type: 'z' },
+  '7z': { label: '中', type: 'z' },
 };
 
+/**
+ * 牌のHTML要素を生成
+ * @param {string} tileId - '1m', '7z' etc.
+ * @param {object} options - { isWinning, onClick }
+ * @returns {HTMLElement}
+ */
+function createTileElement(tileId, options = {}) {
+  const info = TILE_LABELS[tileId];
+  if (!info) return null;
+
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.dataset.tile = tileId;
+  el.dataset.suit = info.type;
+
+  if (info.type === 'z') {
+    el.classList.add('jihai');
+    const labelEl = document.createElement('span');
+    labelEl.className = 'tile-label';
+    labelEl.textContent = info.label;
+    el.appendChild(labelEl);
+  } else {
+    const numEl = document.createElement('span');
+    numEl.className = 'tile-num';
+    numEl.textContent = info.num;
+    el.appendChild(numEl);
+
+    if (info.suit) {
+      const suitEl = document.createElement('span');
+      suitEl.className = 'tile-suit-label';
+      suitEl.textContent = info.suit;
+      el.appendChild(suitEl);
+    }
+  }
+
+  if (options.isWinning) {
+    el.classList.add('winning-tile');
+  }
+
+  if (options.onClick) {
+    el.addEventListener('click', options.onClick);
+  }
+
+  return el;
+}
+
+/* ==========================================================
+   Application
+   ========================================================== */
+
 document.addEventListener('DOMContentLoaded', () => {
-  let hand = []; // max 14
-  let dora = []; // 
+  let hand = [];   // max 14
+  let dora = [];
   let isDoraMode = false;
 
+  // DOM refs
   const handCountEl = document.getElementById('hand-count');
   const handTilesEl = document.getElementById('hand-tiles');
   const doraTilesEl = document.getElementById('dora-tiles');
-  
+
   const kbManzu = document.getElementById('kb-manzu');
   const kbPinzu = document.getElementById('kb-pinzu');
   const kbSozu = document.getElementById('kb-sozu');
@@ -30,24 +120,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const scoreBreakdownEl = document.getElementById('score-breakdown');
   const yakuListEl = document.getElementById('yaku-list');
 
-  // キーボード生成
+  /* ---------- Keyboard ---------- */
   function createKeyboard() {
-    const keys = Object.keys(TILE_UNICODE);
-    keys.forEach(key => {
-      const btn = document.createElement('button');
-      btn.className = 'tile-btn';
-      btn.dataset.tile = key;
-      btn.textContent = TILE_UNICODE[key];
-      btn.addEventListener('click', () => addTile(key));
+    const tileIds = Object.keys(TILE_LABELS);
+    tileIds.forEach(id => {
+      const tile = createTileElement(id, {
+        onClick: () => addTile(id),
+      });
+      if (!tile) return;
 
-      if (key.endsWith('m')) kbManzu.appendChild(btn);
-      else if (key.endsWith('p')) kbPinzu.appendChild(btn);
-      else if (key.endsWith('s')) kbSozu.appendChild(btn);
-      else if (key.endsWith('z')) kbJihai.appendChild(btn);
+      const suit = id.slice(-1);
+      if (suit === 'm') kbManzu.appendChild(tile);
+      else if (suit === 'p') kbPinzu.appendChild(tile);
+      else if (suit === 's') kbSozu.appendChild(tile);
+      else if (suit === 'z') kbJihai.appendChild(tile);
     });
   }
 
-  // 牌を追加
+  /* ---------- Add Tile ---------- */
   function addTile(tileId) {
     if (isDoraMode) {
       dora.push(tileId);
@@ -55,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (hand.length < 14) {
         hand.push(tileId);
       } else {
-        // すでに14枚なら最後の1枚（和了牌）を上書き
+        // 14枚目（和了牌）を上書き
         hand[13] = tileId;
       }
     }
@@ -63,44 +153,36 @@ document.addEventListener('DOMContentLoaded', () => {
     triggerCalculate();
   }
 
-  // 描画
+  /* ---------- Render ---------- */
   function renderTiles() {
     handCountEl.textContent = `${hand.length} / 14`;
-    
-    // 手牌の描画 (13枚はソートして、14枚目はあがり牌として右に離すのが一般的だが、今回はそのままかソートするか)
-    // わかりやすさのため、入力順を保持する。または自動理牌するか。
-    // 自動理牌するなら最後の1枚だけ特別扱いする。
-    let displayHand = [...hand];
-    if (displayHand.length > 0) {
+
+    // 手牌
+    handTilesEl.innerHTML = '';
+    if (hand.length > 0) {
       handTilesEl.classList.remove('empty');
-      let html = '';
-      displayHand.forEach((t, i) => {
-        if (i === 13) {
-          html += `<span class="mahjong-tile winning-tile">${TILE_UNICODE[t]}</span>`;
-        } else {
-          html += `<span class="mahjong-tile">${TILE_UNICODE[t]}</span>`;
-        }
+      hand.forEach((t, i) => {
+        const tile = createTileElement(t, { isWinning: i === 13 });
+        if (tile) handTilesEl.appendChild(tile);
       });
-      handTilesEl.innerHTML = html;
     } else {
       handTilesEl.classList.add('empty');
-      handTilesEl.innerHTML = '';
     }
 
-    // ドラ表示牌の描画
+    // ドラ表示牌
+    doraTilesEl.innerHTML = '';
     if (dora.length > 0) {
       doraTilesEl.classList.remove('empty');
-      let html = '';
-      dora.forEach((t) => {
-        html += `<span class="mahjong-tile">${TILE_UNICODE[t]}</span>`;
+      dora.forEach(t => {
+        const tile = createTileElement(t);
+        if (tile) doraTilesEl.appendChild(tile);
       });
-      doraTilesEl.innerHTML = html;
     } else {
       doraTilesEl.classList.add('empty');
-      doraTilesEl.innerHTML = '';
     }
   }
 
+  /* ---------- Reset ---------- */
   function resetCalculation() {
     scoreNameEl.textContent = '未完成の手牌です';
     scoreNameEl.style.color = 'var(--text-secondary)';
@@ -109,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     yakuListEl.innerHTML = '<li class="empty-yaku">役がありません</li>';
   }
 
-  // 計算の実行
+  /* ---------- Calculate ---------- */
   function triggerCalculate() {
     if (hand.length < 14) {
       resetCalculation();
@@ -117,21 +199,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const isTsumo = document.getElementById('tsumo').checked;
-    
     const jikazeStr = document.querySelector('input[name="wind"]:checked').value;
     const bakazeStr = document.querySelector('input[name="bakaze"]:checked').value;
-    const isOya = (jikazeStr === '1'); // 東が親
+    const isOya = (jikazeStr === '1');
 
     const hand13 = hand.slice(0, 13);
     const winTile = hand[13];
 
-    // 特別役オプションの取得
+    // 特別役オプション
     let extraYaku = '';
     document.querySelectorAll('#extra-yaku-group input[type="checkbox"]:checked').forEach(chk => {
       extraYaku += chk.value;
     });
 
-    const result = calculateHandScore(hand13, winTile, dora, isTsumo, parseInt(bakazeStr), parseInt(jikazeStr), extraYaku);
+    const result = calculateHandScore(
+      hand13, winTile, dora, isTsumo,
+      parseInt(bakazeStr), parseInt(jikazeStr), extraYaku
+    );
 
     if (result.error) {
       scoreNameEl.textContent = result.message;
@@ -143,8 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     scoreNameEl.style.color = 'var(--primary-color)';
-    
-    // 役一覧の表示
+
+    // 役一覧
     let yakuHtml = '';
     if (result.yaku && Object.keys(result.yaku).length > 0) {
       for (const [yakuName, han] of Object.entries(result.yaku)) {
@@ -155,37 +239,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     yakuListEl.innerHTML = yakuHtml;
 
-    // 点数の名前（満貫など）
-    // riichiパッケージはtextプロパティに全体サマリが入るか、独自で判定するか。
-    // han と fu を表示
+    // タイトル（満貫等）
     let title = '';
     if (result.name) {
       title = result.name;
     } else {
       title = `${result.han}飜 ${result.fu}符`;
     }
-    
     scoreNameEl.textContent = title;
     scoreTotalEl.textContent = result.ten.toLocaleString();
 
     // 内訳
     if (isTsumo) {
       if (isOya) {
-        scoreBreakdownEl.textContent = `子 各${result.oya[0]}払い`;
+        scoreBreakdownEl.textContent = `子 各${result.oya[0].toLocaleString()}点`;
       } else {
-        scoreBreakdownEl.textContent = `子 ${result.ko[1]} / 親 ${result.ko[0]} 払い`;
+        scoreBreakdownEl.textContent = `子 ${result.ko[1].toLocaleString()} / 親 ${result.ko[0].toLocaleString()} 点`;
       }
     } else {
-      scoreBreakdownEl.textContent = 'ロンあがり (放銃者が全額払い)';
+      scoreBreakdownEl.textContent = 'ロン（放銃者が全額払い）';
     }
 
-    // アニメーション用
+    // アニメーション
     scoreTotalEl.classList.remove('updated');
     void scoreTotalEl.offsetWidth;
     scoreTotalEl.classList.add('updated');
   }
 
-  // イベントリスナー
+  /* ---------- Event Listeners ---------- */
   btnBackspace.addEventListener('click', () => {
     if (isDoraMode && dora.length > 0) {
       dora.pop();
@@ -207,18 +288,20 @@ document.addEventListener('DOMContentLoaded', () => {
     isDoraMode = !isDoraMode;
     if (isDoraMode) {
       btnToggleDora.classList.add('active');
-      btnToggleDora.textContent = 'ドラ入力モード: ON';
+      btnToggleDora.textContent = 'ドラ入力: ON';
     } else {
       btnToggleDora.classList.remove('active');
-      btnToggleDora.textContent = 'ドラ入力モード: OFF';
+      btnToggleDora.textContent = 'ドラ入力: OFF';
     }
   });
 
-  document.querySelectorAll('input[name="wind"], input[name="win-type"], input[name="bakaze"], #extra-yaku-group input[type="checkbox"]').forEach(el => {
+  document.querySelectorAll(
+    'input[name="wind"], input[name="win-type"], input[name="bakaze"], #extra-yaku-group input[type="checkbox"]'
+  ).forEach(el => {
     el.addEventListener('change', triggerCalculate);
   });
 
-  // 初期化
+  /* ---------- Init ---------- */
   createKeyboard();
   renderTiles();
 });
